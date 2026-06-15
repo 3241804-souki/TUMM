@@ -64,14 +64,15 @@ button:hover{
 }
 
 .piano-section{
-    margin-top:15px;
+    margin-top:20px;
+    margin-bottom:80px; /* extra space so piano never touches sequencer */
 }
 
 .piano-container{
     position:relative;
     width:560px;
     max-width:95%;
-    height:200px;
+    height:220px;
     margin:0 auto;
 }
 
@@ -107,6 +108,7 @@ button:hover{
     cursor:pointer;
     user-select:none;
     font-size:12px;
+    z-index:2;
 }
 
 .black-key.active{
@@ -114,9 +116,10 @@ button:hover{
 }
 
 .sequencer-container{
-    margin:30px auto;
+    margin:20px auto 30px auto;
     width:95%;
     overflow-x:auto;
+    clear:both;
 }
 
 .sequencer{
@@ -158,13 +161,15 @@ button:hover{
 }
 
 @media (max-width:700px){
+
     .white-key{
         width:50px;
     }
 
     .piano-container{
-        height:180px;
+        height:200px;
     }
+
 }
 </style>
 </head>
@@ -189,6 +194,7 @@ button:hover{
 
     <div class="piano-container">
 
+        <!-- White keys -->
         <div class="white-key" data-note="C4">C</div>
         <div class="white-key" data-note="D4">D</div>
         <div class="white-key" data-note="E4">E</div>
@@ -197,11 +203,16 @@ button:hover{
         <div class="white-key" data-note="A4">A</div>
         <div class="white-key" data-note="B4">B</div>
 
+        <!-- Black keys -->
         <div class="black-key" style="left:55px;" data-note="C#4">C#</div>
         <div class="black-key" style="left:135px;" data-note="D#4">D#</div>
         <div class="black-key" style="left:295px;" data-note="F#4">F#</div>
-        <div class="black-key" style="left:375px;" data-note="G#4">G#</div>
+
+        <!-- Moved A# so it sits between A and B -->
         <div class="black-key" style="left:455px;" data-note="A#4">A#</div>
+
+        <!-- G# placed before A -->
+        <div class="black-key" style="left:375px;" data-note="G#4">G#</div>
 
     </div>
 
@@ -219,7 +230,13 @@ button:hover{
 
 <script>
 const notes = [
-    "C4","D4","E4","F4","G4","A4","B4"
+    "C4",
+    "D4",
+    "E4",
+    "F4",
+    "G4",
+    "A4",
+    "B4"
 ];
 
 const frequencies = {
@@ -241,7 +258,7 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 const volumeSlider = document.getElementById("volume");
 
-function playNote(note, duration=0.35){
+function playNote(note, duration = 0.35){
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -264,17 +281,17 @@ function playNote(note, duration=0.35){
     oscillator.stop(audioContext.currentTime + duration);
 }
 
-document.querySelectorAll(".white-key, .black-key").forEach(key=>{
+document.querySelectorAll(".white-key, .black-key").forEach(key => {
 
-    key.addEventListener("click", ()=>{
+    key.addEventListener("click", () => {
 
         playNote(key.dataset.note);
 
         key.classList.add("active");
 
-        setTimeout(()=>{
+        setTimeout(() => {
             key.classList.remove("active");
-        },150);
+        }, 150);
 
     });
 
@@ -283,14 +300,14 @@ document.querySelectorAll(".white-key, .black-key").forEach(key=>{
 const sequencer = document.getElementById("sequencer");
 const steps = 16;
 
-notes.forEach((note,row)=>{
+notes.forEach(note => {
 
     const label = document.createElement("div");
     label.className = "note-label";
     label.textContent = note;
     sequencer.appendChild(label);
 
-    for(let col=0; col<steps; col++){
+    for(let col = 0; col < steps; col++){
 
         const cell = document.createElement("div");
         cell.className = "step";
@@ -298,7 +315,7 @@ notes.forEach((note,row)=>{
         cell.dataset.note = note;
         cell.dataset.step = col;
 
-        cell.addEventListener("click", ()=>{
+        cell.addEventListener("click", () => {
             cell.classList.toggle("active");
         });
 
@@ -309,12 +326,13 @@ notes.forEach((note,row)=>{
 let playTimer = null;
 
 function stopSong(){
+
     if(playTimer){
         clearInterval(playTimer);
         playTimer = null;
     }
 
-    document.querySelectorAll(".step").forEach(step=>{
+    document.querySelectorAll(".step").forEach(step => {
         step.classList.remove("playing");
     });
 }
@@ -325,23 +343,22 @@ function playSong(){
 
     let currentStep = 0;
 
-    playTimer = setInterval(()=>{
+    playTimer = setInterval(() => {
 
-        document.querySelectorAll(".step").forEach(step=>{
+        document.querySelectorAll(".step").forEach(step => {
             step.classList.remove("playing");
         });
 
-        const currentCells =
-            document.querySelectorAll(
-                '.step[data-step="' + currentStep + '"]'
-            );
+        const currentCells = document.querySelectorAll(
+            '.step[data-step="' + currentStep + '"]'
+        );
 
-        currentCells.forEach(cell=>{
+        currentCells.forEach(cell => {
 
             cell.classList.add("playing");
 
             if(cell.classList.contains("active")){
-                playNote(cell.dataset.note,0.25);
+                playNote(cell.dataset.note, 0.25);
             }
 
         });
@@ -352,10 +369,10 @@ function playSong(){
             currentStep = 0;
         }
 
-    },300);
+    }, 300);
 }
 
-document.getElementById("playBtn").addEventListener("click", async ()=>{
+document.getElementById("playBtn").addEventListener("click", async () => {
 
     if(audioContext.state === "suspended"){
         await audioContext.resume();
@@ -364,7 +381,7 @@ document.getElementById("playBtn").addEventListener("click", async ()=>{
     playSong();
 });
 
-document.getElementById("stopBtn").addEventListener("click", ()=>{
+document.getElementById("stopBtn").addEventListener("click", () => {
     stopSong();
 });
 </script>
