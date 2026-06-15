@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Piano Music Maker</title>
+<link rel="icon" href="mainlogo.jpg">
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#f5f5f5;
+    color:#222;
+    text-align:center;
+}
+
+header{
+    background:white;
+    padding:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.banner{
+    width:100%;
+    max-height:180px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+h1{
+    margin-top:10px;
+}
+
+.controls{
+    margin:15px auto;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#222;
+    color:white;
+    font-size:16px;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+#volume{
+    width:180px;
+}
+
+.piano-section{
+    margin-top:15px;
+}
+
+.piano-container{
+    position:relative;
+    width:560px;
+    max-width:95%;
+    height:200px;
+    margin:0 auto;
+}
+
+.white-key{
+    width:80px;
+    height:200px;
+    background:white;
+    border:1px solid #444;
+    display:inline-flex;
+    justify-content:center;
+    align-items:flex-end;
+    padding-bottom:10px;
+    cursor:pointer;
+    user-select:none;
+    font-weight:bold;
+}
+
+.white-key.active{
+    background:#d9d9d9;
+}
+
+.black-key{
+    position:absolute;
+    width:50px;
+    height:120px;
+    background:black;
+    color:white;
+    border-radius:0 0 6px 6px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    padding-bottom:8px;
+    cursor:pointer;
+    user-select:none;
+    font-size:12px;
+}
+
+.black-key.active{
+    background:#444;
+}
+
+.sequencer-container{
+    margin:30px auto;
+    width:95%;
+    overflow-x:auto;
+}
+
+.sequencer{
+    display:grid;
+    grid-template-columns:80px repeat(16, 40px);
+    gap:2px;
+    justify-content:center;
+}
+
+.note-label{
+    background:white;
+    border:1px solid #ccc;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    height:40px;
+}
+
+.step{
+    width:40px;
+    height:40px;
+    border:1px solid #999;
+    background:white;
+    cursor:pointer;
+}
+
+.step.active{
+    background:#ffd84d;
+}
+
+.step.playing{
+    outline:3px solid red;
+}
+
+.info{
+    margin-top:10px;
+    font-size:14px;
+}
+
+@media (max-width:700px){
+    .white-key{
+        width:50px;
+    }
+
+    .piano-container{
+        height:180px;
+    }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <img src="sublogo.jpg" class="banner" alt="Banner">
+    <h1>🎹 Simple Piano Music Maker</h1>
+</header>
+
+<div class="controls">
+    <button id="playBtn">▶ Play Song</button>
+    <button id="stopBtn">■ Stop</button>
+
+    <label>
+        Volume:
+        <input type="range" id="volume" min="0" max="100" value="50">
+    </label>
+</div>
+
+<div class="piano-section">
+
+    <div class="piano-container">
+
+        <div class="white-key" data-note="C4">C</div>
+        <div class="white-key" data-note="D4">D</div>
+        <div class="white-key" data-note="E4">E</div>
+        <div class="white-key" data-note="F4">F</div>
+        <div class="white-key" data-note="G4">G</div>
+        <div class="white-key" data-note="A4">A</div>
+        <div class="white-key" data-note="B4">B</div>
+
+        <div class="black-key" style="left:55px;" data-note="C#4">C#</div>
+        <div class="black-key" style="left:135px;" data-note="D#4">D#</div>
+        <div class="black-key" style="left:295px;" data-note="F#4">F#</div>
+        <div class="black-key" style="left:375px;" data-note="G#4">G#</div>
+        <div class="black-key" style="left:455px;" data-note="A#4">A#</div>
+
+    </div>
+
+</div>
+
+<div class="sequencer-container">
+    <h2 style="margin-bottom:10px;">Music Sequencer</h2>
+
+    <div class="sequencer" id="sequencer"></div>
+
+    <div class="info">
+        Click yellow boxes to create music. Then press Play Song.
+    </div>
+</div>
+
+<script>
+const notes = [
+    "C4","D4","E4","F4","G4","A4","B4"
+];
+
+const frequencies = {
+    "C4":261.63,
+    "C#4":277.18,
+    "D4":293.66,
+    "D#4":311.13,
+    "E4":329.63,
+    "F4":349.23,
+    "F#4":369.99,
+    "G4":392.00,
+    "G#4":415.30,
+    "A4":440.00,
+    "A#4":466.16,
+    "B4":493.88
+};
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+const volumeSlider = document.getElementById("volume");
+
+function playNote(note, duration=0.35){
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.value = frequencies[note];
+
+    gainNode.gain.value = volumeSlider.value / 100;
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+
+    gainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioContext.currentTime + duration
+    );
+
+    oscillator.stop(audioContext.currentTime + duration);
+}
+
+document.querySelectorAll(".white-key, .black-key").forEach(key=>{
+
+    key.addEventListener("click", ()=>{
+
+        playNote(key.dataset.note);
+
+        key.classList.add("active");
+
+        setTimeout(()=>{
+            key.classList.remove("active");
+        },150);
+
+    });
+
+});
+
+const sequencer = document.getElementById("sequencer");
+const steps = 16;
+
+notes.forEach((note,row)=>{
+
+    const label = document.createElement("div");
+    label.className = "note-label";
+    label.textContent = note;
+    sequencer.appendChild(label);
+
+    for(let col=0; col<steps; col++){
+
+        const cell = document.createElement("div");
+        cell.className = "step";
+
+        cell.dataset.note = note;
+        cell.dataset.step = col;
+
+        cell.addEventListener("click", ()=>{
+            cell.classList.toggle("active");
+        });
+
+        sequencer.appendChild(cell);
+    }
+});
+
+let playTimer = null;
+
+function stopSong(){
+    if(playTimer){
+        clearInterval(playTimer);
+        playTimer = null;
+    }
+
+    document.querySelectorAll(".step").forEach(step=>{
+        step.classList.remove("playing");
+    });
+}
+
+function playSong(){
+
+    stopSong();
+
+    let currentStep = 0;
+
+    playTimer = setInterval(()=>{
+
+        document.querySelectorAll(".step").forEach(step=>{
+            step.classList.remove("playing");
+        });
+
+        const currentCells =
+            document.querySelectorAll(
+                '.step[data-step="' + currentStep + '"]'
+            );
+
+        currentCells.forEach(cell=>{
+
+            cell.classList.add("playing");
+
+            if(cell.classList.contains("active")){
+                playNote(cell.dataset.note,0.25);
+            }
+
+        });
+
+        currentStep++;
+
+        if(currentStep >= steps){
+            currentStep = 0;
+        }
+
+    },300);
+}
+
+document.getElementById("playBtn").addEventListener("click", async ()=>{
+
+    if(audioContext.state === "suspended"){
+        await audioContext.resume();
+    }
+
+    playSong();
+});
+
+document.getElementById("stopBtn").addEventListener("click", ()=>{
+    stopSong();
+});
+</script>
+
+</body>
+</html>
