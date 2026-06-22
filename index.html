@@ -22,7 +22,7 @@ body{
 }
 
 .container{
-    max-width:1600px;
+    max-width:1700px;
     margin:auto;
 }
 
@@ -34,8 +34,8 @@ header{
 .logo{
     width:80px;
     height:80px;
-    border-radius:12px;
     object-fit:cover;
+    border-radius:12px;
     margin-bottom:10px;
 }
 
@@ -45,10 +45,6 @@ header{
     object-fit:cover;
     border-radius:12px;
     margin-bottom:15px;
-}
-
-h1{
-    margin-bottom:10px;
 }
 
 .controls{
@@ -81,22 +77,21 @@ button,select{
 
 #piano{
     display:flex;
-    justify-content:center;
     flex-wrap:wrap;
+    justify-content:center;
     gap:2px;
-    margin-bottom:25px;
+    margin-bottom:20px;
 }
 
 .key{
     width:58px;
     height:170px;
     display:flex;
-    align-items:flex-end;
     justify-content:center;
+    align-items:flex-end;
     padding-bottom:10px;
-    border:1px solid #333;
     cursor:pointer;
-    user-select:none;
+    border:1px solid #333;
     font-size:12px;
     font-weight:bold;
 }
@@ -118,8 +113,8 @@ button,select{
 #sequencerWrapper{
     overflow:auto;
     background:white;
-    border-radius:12px;
     padding:10px;
+    border-radius:12px;
 }
 
 #sequencer{
@@ -129,45 +124,47 @@ button,select{
 
 .noteLabel{
     width:90px;
-    height:32px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    height:30px;
     background:#ececec;
+    display:flex;
+    justify-content:center;
+    align-items:center;
     font-size:12px;
     font-weight:bold;
     position:sticky;
     left:0;
-    z-index:5;
+    z-index:3;
 }
 
 .cell{
     width:28px;
-    height:32px;
+    height:30px;
     background:white;
     border:1px solid #ddd;
     cursor:pointer;
 }
 
-.cell.active{
+.measure{
+    border-right:3px solid #666 !important;
+}
+
+.noteStart{
     background:#ffeb3b;
 }
 
-.cell.length{
-    background:#ffc107;
-}
-
-.measure{
-    border-right:3px solid #777 !important;
+.noteBody{
+    background:#ffd54f;
 }
 
 .playhead{
     outline:3px solid #ff5722;
 }
 
-.footer{
-    text-align:center;
+.info{
     margin-top:15px;
+    text-align:center;
+    font-size:14px;
+    line-height:1.6;
 }
 
 input[type=range]{
@@ -176,7 +173,7 @@ input[type=range]{
 
 input[type=number]{
     width:80px;
-    padding:6px;
+    padding:5px;
 }
 </style>
 </head>
@@ -189,7 +186,12 @@ input[type=number]{
 <img src="sublogo.jpg" class="banner">
 
 <h1>Advanced Piano Music Maker</h1>
-<p>3 Octaves • Sharps • BPM • Instruments • Save/Load • Long Notes</p>
+
+<p>
+Click a cell to create a note.<br>
+Click and drag right to make the note longer.
+</p>
+
 </header>
 
 <div class="controls">
@@ -228,22 +230,27 @@ Instrument
 <div id="sequencer"></div>
 </div>
 
-<div class="footer">
-Click a cell = note start<br>
-Click the same note again = make note longer
+<div class="info">
+Yellow = note start<br>
+Orange = note length extension<br>
+Click a note start again to remove it
 </div>
 
 </div>
 
 <script>
+const STEPS = 64;
+
 const pianoDiv = document.getElementById("piano");
 const sequencer = document.getElementById("sequencer");
 
-const STEPS = 64;
-
 let audioContext;
-let playing = null;
+let playTimer = null;
 let currentStep = 0;
+
+let dragging = false;
+let dragRow = null;
+let dragStart = null;
 
 const notes = [
 "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
@@ -252,50 +259,115 @@ const notes = [
 ];
 
 const frequencies = {};
+const noteData = [];
 
-function generateFrequencyMap(){
+function createFrequencyMap(){
 
-const names=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 
-for(let octave=0;octave<=8;octave++){
+for(let octave=0; octave<=8; octave++){
 
 for(let i=0;i<12;i++){
 
-let note=names[i]+octave;
+const index=(octave*12)+i;
+const a4=(4*12)+9;
 
-let a4Index=(4*12)+9;
-let current=(octave*12)+i;
+frequencies[names[i]+octave]=
+440*Math.pow(2,(index-a4)/12);
 
-let freq=440*Math.pow(2,(current-a4Index)/12);
-
-frequencies[note]=freq;
-}
-}
 }
 
-generateFrequencyMap();
+}
 
-const sequence=[];
+}
+
+createFrequencyMap();
 
 notes.forEach(()=>{
-sequence.push(
-Array(STEPS).fill(null)
-);
+noteData.push([]);
 });
 
-function createPiano(){
+function initAudio(){
+
+if(!audioContext){
+
+audioContext =
+new(window.AudioContext || window.webkit.AudioContext)();
+
+}
+
+}
+
+function createOsc(type,freq,gain){
+
+const osc = audioContext.createOscillator();
+
+osc.type = type;
+osc.frequency.value = freq;
+
+osc.connect(gain);
+osc.start();
+
+return osc;
+}
+
+function playSound(note,duration){
+
+initAudio();
+
+const instrument =
+document.getElementById("instrument").value;
+
+const gain = audioContext.createGain();
+gain.gain.value =
+document.getElementById("volume").value/100;
+
+gain.connect(audioContext.destination);
+
+const list=[];
+
+if(instrument==="piano"){
+list.push(createOsc("sine",frequencies[note],gain));
+}
+
+if(instrument==="electric"){
+list.push(createOsc("triangle",frequencies[note],gain));
+}
+
+if(instrument==="organ"){
+list.push(createOsc("square",frequencies[note],gain));
+list.push(createOsc("square",frequencies[note]*2,gain));
+}
+
+if(instrument==="strings"){
+list.push(createOsc("sawtooth",frequencies[note],gain));
+list.push(createOsc("triangle",frequencies[note]/2,gain));
+}
+
+gain.gain.exponentialRampToValueAtTime(
+0.0001,
+audioContext.currentTime + duration
+);
+
+list.forEach(osc=>{
+osc.stop(audioContext.currentTime + duration);
+});
+
+}
+
+function buildPiano(){
 
 notes.forEach(note=>{
 
 const key=document.createElement("div");
 
-const isBlack=note.includes("#");
-
-key.className="key "+(isBlack?"black":"white");
+key.className =
+"key " + (note.includes("#") ? "black":"white");
 
 key.textContent=note;
 
 key.onclick=()=>{
+
 playSound(note,0.5);
 
 key.classList.add("active");
@@ -303,6 +375,7 @@ key.classList.add("active");
 setTimeout(()=>{
 key.classList.remove("active");
 },100);
+
 };
 
 pianoDiv.appendChild(key);
@@ -311,18 +384,20 @@ pianoDiv.appendChild(key);
 
 }
 
-createPiano();
+buildPiano();
 
-function buildSequencer(){
+function renderSequencer(){
 
-sequencer.style.gridTemplateColumns=
+sequencer.innerHTML="";
+
+sequencer.style.gridTemplateColumns =
 "90px repeat("+STEPS+", 28px)";
 
-notes.forEach((note,row)=>{
+for(let row=0;row<notes.length;row++){
 
 const label=document.createElement("div");
 label.className="noteLabel";
-label.textContent=note;
+label.textContent=notes[row];
 sequencer.appendChild(label);
 
 for(let col=0;col<STEPS;col++){
@@ -338,132 +413,95 @@ cell.classList.add("measure");
 cell.dataset.row=row;
 cell.dataset.col=col;
 
-cell.onclick=()=>{
+const note = noteData[row].find(n=>{
+return col >= n.start && col < n.start+n.length;
+});
 
-if(sequence[row][col]===null){
+if(note){
 
-sequence[row][col]=1;
-
-cell.classList.add("active");
-
+if(col===note.start){
+cell.classList.add("noteStart");
 }else{
-
-sequence[row][col]++;
-
-cell.classList.add("length");
-
-if(sequence[row][col]>8){
-sequence[row][col]=null;
-cell.className="cell";
-
-if((col+1)%4===0){
-cell.classList.add("measure");
-}
+cell.classList.add("noteBody");
 }
 
 }
 
-};
+cell.addEventListener("mousedown",()=>{
+
+dragging=true;
+dragRow=row;
+dragStart=col;
+
+const existing =
+noteData[row].find(n=>n.start===col);
+
+if(existing){
+
+noteData[row] =
+noteData[row].filter(n=>n!==existing);
+
+renderSequencer();
+return;
+}
+
+noteData[row].push({
+start:col,
+length:1
+});
+
+renderSequencer();
+
+});
+
+cell.addEventListener("mouseenter",()=>{
+
+if(!dragging) return;
+if(row!==dragRow) return;
+
+const note =
+noteData[row].find(n=>n.start===dragStart);
+
+if(!note) return;
+
+note.length =
+Math.max(1,(col-dragStart)+1);
+
+renderSequencer();
+
+});
 
 sequencer.appendChild(cell);
 
 }
 
+}
+
+}
+
+document.addEventListener("mouseup",()=>{
+
+dragging=false;
+dragRow=null;
+dragStart=null;
+
 });
 
-}
-
-buildSequencer();
-
-function getVolume(){
-return document.getElementById("volume").value/100;
-}
-
-function initAudio(){
-
-if(!audioContext){
-audioContext=new(window.AudioContext||window.webkitAudioContext)();
-}
-
-}
-
-function createOsc(type,freq,gainNode){
-
-const osc=audioContext.createOscillator();
-
-osc.type=type;
-osc.frequency.value=freq;
-
-osc.connect(gainNode);
-
-osc.start();
-
-return osc;
-}
-
-function playSound(note,length){
-
-initAudio();
-
-const instrument=document.getElementById("instrument").value;
-
-const gain=audioContext.createGain();
-
-gain.gain.value=getVolume();
-
-gain.connect(audioContext.destination);
-
-let oscillators=[];
-
-if(instrument==="piano"){
-
-oscillators.push(createOsc("sine",frequencies[note],gain));
-
-}
-
-if(instrument==="electric"){
-
-oscillators.push(createOsc("triangle",frequencies[note],gain));
-
-}
-
-if(instrument==="organ"){
-
-oscillators.push(createOsc("square",frequencies[note],gain));
-oscillators.push(createOsc("square",frequencies[note]*2,gain));
-
-}
-
-if(instrument==="strings"){
-
-oscillators.push(createOsc("sawtooth",frequencies[note],gain));
-oscillators.push(createOsc("triangle",frequencies[note]*0.5,gain));
-
-}
-
-gain.gain.exponentialRampToValueAtTime(
-0.0001,
-audioContext.currentTime+length
-);
-
-oscillators.forEach(o=>{
-o.stop(audioContext.currentTime+length);
-});
-
-}
+renderSequencer();
 
 function clearPlayhead(){
 
-document.querySelectorAll(".playhead").forEach(c=>{
-c.classList.remove("playhead");
+document.querySelectorAll(".playhead")
+.forEach(cell=>{
+cell.classList.remove("playhead");
 });
 
 }
 
 function stopSong(){
 
-clearInterval(playing);
-playing=null;
+clearInterval(playTimer);
+playTimer=null;
 currentStep=0;
 clearPlayhead();
 
@@ -473,41 +511,42 @@ function playSong(){
 
 stopSong();
 
-const bpm=parseInt(
-document.getElementById("bpm").value
-);
+const bpm =
+parseInt(document.getElementById("bpm").value);
 
-const stepTime=(60000/bpm)/4;
+const stepTime =
+(60000/bpm)/4;
 
-playing=setInterval(()=>{
+playTimer=setInterval(()=>{
 
 clearPlayhead();
 
-const cells=document.querySelectorAll(".cell");
+const cells =
+document.querySelectorAll(".cell");
 
-notes.forEach((note,row)=>{
+for(let row=0;row<notes.length;row++){
 
-const visualIndex=
+const visualIndex =
 (row*STEPS)+currentStep;
 
-const cell=cells[visualIndex];
-
-if(cell){
-cell.classList.add("playhead");
+if(cells[visualIndex]){
+cells[visualIndex].classList.add("playhead");
 }
 
-const length=sequence[row][currentStep];
+for(const note of noteData[row]){
 
-if(length){
+if(note.start===currentStep){
 
 playSound(
-note,
-(length*stepTime)/1000
+notes[row],
+(note.length*stepTime)/1000
 );
 
 }
 
-});
+}
+
+}
 
 currentStep++;
 
@@ -519,98 +558,63 @@ currentStep=0;
 
 }
 
-document.getElementById("playBtn").onclick=playSong;
-document.getElementById("stopBtn").onclick=stopSong;
+document.getElementById("playBtn")
+.addEventListener("click",playSong);
 
-document.getElementById("clearBtn").onclick=()=>{
+document.getElementById("stopBtn")
+.addEventListener("click",stopSong);
+
+document.getElementById("clearBtn")
+.addEventListener("click",()=>{
 
 stopSong();
 
-for(let r=0;r<notes.length;r++){
-for(let c=0;c<STEPS;c++){
-sequence[r][c]=null;
-}
+for(let i=0;i<noteData.length;i++){
+noteData[i]=[];
 }
 
-document.querySelectorAll(".cell").forEach(cell=>{
-
-cell.className="cell";
-
-const col=parseInt(cell.dataset.col);
-
-if((col+1)%4===0){
-cell.classList.add("measure");
-}
+renderSequencer();
 
 });
 
-};
-
-document.getElementById("saveBtn").onclick=()=>{
-
-const data={
-sequence:sequence
-};
+document.getElementById("saveBtn")
+.addEventListener("click",()=>{
 
 localStorage.setItem(
 "advancedPianoSong",
-JSON.stringify(data)
+JSON.stringify(noteData)
 );
 
 alert("Song Saved");
 
-};
+});
 
-document.getElementById("loadBtn").onclick=()=>{
+document.getElementById("loadBtn")
+.addEventListener("click",()=>{
 
-const data=
-localStorage.getItem(
-"advancedPianoSong"
-);
+const data =
+localStorage.getItem("advancedPianoSong");
 
 if(!data){
 alert("No saved song");
 return;
 }
 
-const parsed=JSON.parse(data);
+const parsed =
+JSON.parse(data);
 
-for(let r=0;r<notes.length;r++){
-for(let c=0;c<STEPS;c++){
+for(let i=0;i<notes.length;i++){
 
-sequence[r][c]=parsed.sequence[r][c];
-
-}
-}
-
-document.querySelectorAll(".cell").forEach(cell=>{
-
-const row=parseInt(cell.dataset.row);
-const col=parseInt(cell.dataset.col);
-
-cell.className="cell";
-
-if((col+1)%4===0){
-cell.classList.add("measure");
-}
-
-const value=sequence[row][col];
-
-if(value){
-
-if(value===1){
-cell.classList.add("active");
-}else{
-cell.classList.add("length");
-}
+noteData[i] =
+parsed[i] || [];
 
 }
 
-});
+renderSequencer();
 
 alert("Song Loaded");
 
-};
+});
 </script>
 
 </body>
