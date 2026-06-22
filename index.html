@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Simple Piano Music Maker</title>
-<link rel="icon" href="mainlogo.jpg">
+
+<link rel="icon" type="image/jpeg" href="mainlogo.jpg">
+
 <style>
 *{
     box-sizing:border-box;
@@ -16,351 +18,361 @@
 body{
     background:#f5f5f5;
     color:#222;
-    text-align:center;
+    padding:15px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
 }
 
 header{
-    background:white;
-    padding:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.logo{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-bottom:10px;
 }
 
 .banner{
     width:100%;
     max-height:180px;
     object-fit:cover;
-    border-radius:10px;
+    border-radius:12px;
+    margin-bottom:15px;
 }
 
 h1{
-    margin-top:10px;
+    margin-bottom:8px;
+}
+
+p{
+    margin-bottom:10px;
 }
 
 .controls{
-    margin:15px auto;
     display:flex;
+    flex-wrap:wrap;
+    gap:10px;
     justify-content:center;
     align-items:center;
-    gap:15px;
-    flex-wrap:wrap;
+    margin-bottom:20px;
 }
 
 button{
-    padding:10px 18px;
+    padding:10px 16px;
     border:none;
     border-radius:8px;
     cursor:pointer;
-    background:#222;
+    font-weight:bold;
+}
+
+.play-btn{
+    background:#4caf50;
     color:white;
-    font-size:16px;
 }
 
-button:hover{
-    opacity:0.9;
+.stop-btn{
+    background:#f44336;
+    color:white;
 }
 
-#volume{
-    width:180px;
+.clear-btn{
+    background:#2196f3;
+    color:white;
 }
 
-.piano-section{
-    margin-top:20px;
-    margin-bottom:80px; /* extra space so piano never touches sequencer */
-}
-
-.piano-container{
-    position:relative;
-    width:560px;
-    max-width:95%;
-    height:220px;
-    margin:0 auto;
-}
-
-.white-key{
-    width:80px;
-    height:200px;
+.volume-box{
     background:white;
-    border:1px solid #444;
-    display:inline-flex;
+    padding:10px 14px;
+    border-radius:8px;
+}
+
+#piano{
+    display:flex;
     justify-content:center;
+    gap:2px;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+}
+
+.key{
+    width:70px;
+    height:180px;
+    display:flex;
     align-items:flex-end;
+    justify-content:center;
     padding-bottom:10px;
     cursor:pointer;
     user-select:none;
     font-weight:bold;
+    border:1px solid #444;
+    transition:0.1s;
 }
 
-.white-key.active{
-    background:#d9d9d9;
+.white{
+    background:white;
+    color:black;
 }
 
-.black-key{
-    position:absolute;
-    width:50px;
-    height:120px;
+.black{
     background:black;
     color:white;
-    border-radius:0 0 6px 6px;
-    display:flex;
-    justify-content:center;
-    align-items:flex-end;
-    padding-bottom:8px;
-    cursor:pointer;
-    user-select:none;
-    font-size:12px;
-    z-index:2;
 }
 
-.black-key.active{
+.key.active{
+    transform:translateY(4px);
+}
+
+.white.active{
+    background:#ddd;
+}
+
+.black.active{
     background:#444;
 }
 
-.sequencer-container{
-    margin:20px auto 30px auto;
-    width:95%;
+.sequencer-wrapper{
     overflow-x:auto;
-    clear:both;
+    background:white;
+    padding:10px;
+    border-radius:12px;
 }
 
-.sequencer{
+#sequencer{
     display:grid;
-    grid-template-columns:80px repeat(16, 40px);
+    grid-template-columns:80px repeat(16, 50px);
     gap:2px;
-    justify-content:center;
 }
 
 .note-label{
-    background:white;
-    border:1px solid #ccc;
+    height:40px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-weight:bold;
-    height:40px;
+    background:#eee;
 }
 
 .step{
-    width:40px;
+    width:50px;
     height:40px;
-    border:1px solid #999;
-    background:white;
     cursor:pointer;
+    border:1px solid #ccc;
 }
 
-.step.active{
-    background:#ffd84d;
+.step.off{
+    background:white;
 }
 
-.step.playing{
-    outline:3px solid red;
+.step.on{
+    background:#ffeb3b;
 }
 
-.info{
-    margin-top:10px;
+.playing{
+    outline:4px solid #ff9800;
+}
+
+.footer-text{
+    text-align:center;
+    margin-top:15px;
     font-size:14px;
-}
-
-@media (max-width:700px){
-
-    .white-key{
-        width:50px;
-    }
-
-    .piano-container{
-        height:200px;
-    }
-
 }
 </style>
 </head>
 <body>
 
+<div class="container">
+
 <header>
-    <img src="sublogo.jpg" class="banner" alt="Banner">
-    <h1>🎹 Simple Piano Music Maker</h1>
+    <img src="mainlogo.jpg" alt="Logo" class="logo">
+    <img src="sublogo.jpg" alt="Banner" class="banner">
+
+    <h1>Simple Piano Music Maker</h1>
+    <p>Click piano keys to play sounds. Click yellow boxes to make music.</p>
 </header>
 
 <div class="controls">
-    <button id="playBtn">▶ Play Song</button>
-    <button id="stopBtn">■ Stop</button>
+    <button class="play-btn" id="playBtn">▶ Play Song</button>
+    <button class="stop-btn" id="stopBtn">■ Stop</button>
+    <button class="clear-btn" id="clearBtn">🗑 Clear</button>
 
-    <label>
+    <div class="volume-box">
         Volume:
         <input type="range" id="volume" min="0" max="100" value="50">
-    </label>
+        <span id="volumeText">50%</span>
+    </div>
 </div>
 
-<div class="piano-section">
+<div id="piano"></div>
 
-    <div class="piano-container">
-
-        <!-- White keys -->
-        <div class="white-key" data-note="C4">C</div>
-        <div class="white-key" data-note="D4">D</div>
-        <div class="white-key" data-note="E4">E</div>
-        <div class="white-key" data-note="F4">F</div>
-        <div class="white-key" data-note="G4">G</div>
-        <div class="white-key" data-note="A4">A</div>
-        <div class="white-key" data-note="B4">B</div>
-
-        <!-- Black keys -->
-        <div class="black-key" style="left:55px;" data-note="C#4">C#</div>
-        <div class="black-key" style="left:135px;" data-note="D#4">D#</div>
-        <div class="black-key" style="left:295px;" data-note="F#4">F#</div>
-
-        <!-- Moved A# so it sits between A and B -->
-        <div class="black-key" style="left:455px;" data-note="A#4">A#</div>
-
-        <!-- G# placed before A -->
-        <div class="black-key" style="left:375px;" data-note="G#4">G#</div>
-
-    </div>
-
+<div class="sequencer-wrapper">
+    <div id="sequencer"></div>
 </div>
 
-<div class="sequencer-container">
-    <h2 style="margin-bottom:10px;">Music Sequencer</h2>
+<div class="footer-text">
+    Piano on top • Music sequencer on bottom
+</div>
 
-    <div class="sequencer" id="sequencer"></div>
-
-    <div class="info">
-        Click yellow boxes to create music. Then press Play Song.
-    </div>
 </div>
 
 <script>
 const notes = [
-    "C4",
-    "D4",
-    "E4",
-    "F4",
-    "G4",
-    "A4",
-    "B4"
+    {name:"C", freq:261.63, color:"white"},
+    {name:"D", freq:293.66, color:"white"},
+    {name:"E", freq:329.63, color:"white"},
+    {name:"F", freq:349.23, color:"white"},
+    {name:"G", freq:392.00, color:"white"},
+    {name:"A", freq:440.00, color:"white"},
+    {name:"B", freq:493.88, color:"white"},
+    {name:"C5", freq:523.25, color:"black"}
 ];
 
-const frequencies = {
-    "C4":261.63,
-    "C#4":277.18,
-    "D4":293.66,
-    "D#4":311.13,
-    "E4":329.63,
-    "F4":349.23,
-    "F#4":369.99,
-    "G4":392.00,
-    "G#4":415.30,
-    "A4":440.00,
-    "A#4":466.16,
-    "B4":493.88
-};
+const steps = 16;
 
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
+const piano = document.getElementById("piano");
+const sequencer = document.getElementById("sequencer");
 const volumeSlider = document.getElementById("volume");
+const volumeText = document.getElementById("volumeText");
 
-function playNote(note, duration = 0.35){
+let audioContext;
+let interval = null;
+let currentStep = 0;
 
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+const grid = [];
 
-    oscillator.type = "triangle";
-    oscillator.frequency.value = frequencies[note];
+function getVolume(){
+    return volumeSlider.value / 100;
+}
 
-    gainNode.gain.value = volumeSlider.value / 100;
+volumeSlider.addEventListener("input", ()=>{
+    volumeText.textContent = volumeSlider.value + "%";
+});
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+function initAudio(){
+    if(!audioContext){
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
 
-    oscillator.start();
+function playTone(freq, duration=0.3){
 
-    gainNode.gain.exponentialRampToValueAtTime(
+    initAudio();
+
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    gain.gain.value = getVolume();
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.start();
+
+    gain.gain.exponentialRampToValueAtTime(
         0.0001,
         audioContext.currentTime + duration
     );
 
-    oscillator.stop(audioContext.currentTime + duration);
+    osc.stop(audioContext.currentTime + duration);
 }
 
-document.querySelectorAll(".white-key, .black-key").forEach(key => {
+notes.forEach((note)=>{
 
-    key.addEventListener("click", () => {
+    const key = document.createElement("div");
+    key.className = "key " + note.color;
+    key.textContent = note.name;
 
-        playNote(key.dataset.note);
+    key.addEventListener("click", ()=>{
+        playTone(note.freq);
 
         key.classList.add("active");
 
-        setTimeout(() => {
+        setTimeout(()=>{
             key.classList.remove("active");
-        }, 150);
-
+        },100);
     });
 
+    piano.appendChild(key);
 });
 
-const sequencer = document.getElementById("sequencer");
-const steps = 16;
-
-notes.forEach(note => {
+notes.forEach((note,row)=>{
 
     const label = document.createElement("div");
     label.className = "note-label";
-    label.textContent = note;
+    label.textContent = note.name;
+
     sequencer.appendChild(label);
 
-    for(let col = 0; col < steps; col++){
+    grid[row] = [];
+
+    for(let col=0; col<steps; col++){
 
         const cell = document.createElement("div");
-        cell.className = "step";
+        cell.className = "step off";
 
-        cell.dataset.note = note;
-        cell.dataset.step = col;
+        grid[row][col] = false;
 
-        cell.addEventListener("click", () => {
-            cell.classList.toggle("active");
+        cell.addEventListener("click", ()=>{
+
+            grid[row][col] = !grid[row][col];
+
+            if(grid[row][col]){
+                cell.className = "step on";
+                playTone(note.freq);
+            }else{
+                cell.className = "step off";
+            }
         });
 
         sequencer.appendChild(cell);
     }
 });
 
-let playTimer = null;
-
 function stopSong(){
 
-    if(playTimer){
-        clearInterval(playTimer);
-        playTimer = null;
-    }
+    clearInterval(interval);
+    interval = null;
 
-    document.querySelectorAll(".step").forEach(step => {
-        step.classList.remove("playing");
+    document.querySelectorAll(".playing").forEach(el=>{
+        el.classList.remove("playing");
     });
+
+    currentStep = 0;
 }
 
 function playSong(){
 
     stopSong();
 
-    let currentStep = 0;
+    const cells = document.querySelectorAll(".step");
 
-    playTimer = setInterval(() => {
+    interval = setInterval(()=>{
 
-        document.querySelectorAll(".step").forEach(step => {
-            step.classList.remove("playing");
+        document.querySelectorAll(".playing").forEach(el=>{
+            el.classList.remove("playing");
         });
 
-        const currentCells = document.querySelectorAll(
-            '.step[data-step="' + currentStep + '"]'
-        );
+        notes.forEach((note,row)=>{
 
-        currentCells.forEach(cell => {
+            const cellIndex = row * steps + currentStep;
+            const cell = cells[cellIndex];
 
-            cell.classList.add("playing");
-
-            if(cell.classList.contains("active")){
-                playNote(cell.dataset.note, 0.25);
+            if(cell){
+                cell.classList.add("playing");
             }
 
+            if(grid[row][currentStep]){
+                playTone(note.freq,0.25);
+            }
         });
 
         currentStep++;
@@ -369,20 +381,29 @@ function playSong(){
             currentStep = 0;
         }
 
-    }, 300);
+    },250);
 }
 
-document.getElementById("playBtn").addEventListener("click", async () => {
+document.getElementById("playBtn").addEventListener("click", playSong);
+document.getElementById("stopBtn").addEventListener("click", stopSong);
 
-    if(audioContext.state === "suspended"){
-        await audioContext.resume();
-    }
+document.getElementById("clearBtn").addEventListener("click", ()=>{
 
-    playSong();
-});
-
-document.getElementById("stopBtn").addEventListener("click", () => {
     stopSong();
+
+    const cells = document.querySelectorAll(".step");
+
+    let index = 0;
+
+    for(let row=0; row<notes.length; row++){
+        for(let col=0; col<steps; col++){
+
+            grid[row][col] = false;
+
+            cells[index].className = "step off";
+            index++;
+        }
+    }
 });
 </script>
 
