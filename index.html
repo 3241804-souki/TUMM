@@ -3,26 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simple Piano Music Maker</title>
+<title>Advanced Piano Music Maker</title>
 
-<link rel="icon" type="image/jpeg" href="mainlogo.jpg">
+<link rel="icon" href="mainlogo.jpg">
 
 <style>
 *{
-    box-sizing:border-box;
     margin:0;
     padding:0;
-    font-family:Arial, Helvetica, sans-serif;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
 }
 
 body{
-    background:#f5f5f5;
-    color:#222;
+    background:#f4f4f4;
     padding:15px;
+    color:#222;
 }
 
 .container{
-    max-width:1200px;
+    max-width:1600px;
     margin:auto;
 }
 
@@ -34,8 +34,8 @@ header{
 .logo{
     width:80px;
     height:80px;
-    object-fit:cover;
     border-radius:12px;
+    object-fit:cover;
     margin-bottom:10px;
 }
 
@@ -48,10 +48,6 @@ header{
 }
 
 h1{
-    margin-bottom:8px;
-}
-
-p{
     margin-bottom:10px;
 }
 
@@ -60,59 +56,49 @@ p{
     flex-wrap:wrap;
     gap:10px;
     justify-content:center;
-    align-items:center;
     margin-bottom:20px;
 }
 
-button{
-    padding:10px 16px;
+button,select{
+    padding:10px 14px;
     border:none;
     border-radius:8px;
     cursor:pointer;
     font-weight:bold;
 }
 
-.play-btn{
-    background:#4caf50;
-    color:white;
-}
+.play-btn{background:#4caf50;color:white;}
+.stop-btn{background:#f44336;color:white;}
+.clear-btn{background:#2196f3;color:white;}
+.save-btn{background:#9c27b0;color:white;}
+.load-btn{background:#ff9800;color:white;}
 
-.stop-btn{
-    background:#f44336;
-    color:white;
-}
-
-.clear-btn{
-    background:#2196f3;
-    color:white;
-}
-
-.volume-box{
+.control-box{
     background:white;
-    padding:10px 14px;
+    padding:10px;
     border-radius:8px;
 }
 
 #piano{
     display:flex;
     justify-content:center;
+    flex-wrap:wrap;
     gap:2px;
     margin-bottom:25px;
-    flex-wrap:wrap;
 }
 
 .key{
-    width:70px;
-    height:180px;
+    width:58px;
+    height:170px;
     display:flex;
     align-items:flex-end;
     justify-content:center;
     padding-bottom:10px;
+    border:1px solid #333;
     cursor:pointer;
     user-select:none;
+    font-size:12px;
     font-weight:bold;
-    border:1px solid #444;
-    transition:0.1s;
 }
 
 .white{
@@ -129,59 +115,68 @@ button{
     transform:translateY(4px);
 }
 
-.white.active{
-    background:#ddd;
-}
-
-.black.active{
-    background:#444;
-}
-
-.sequencer-wrapper{
-    overflow-x:auto;
+#sequencerWrapper{
+    overflow:auto;
     background:white;
-    padding:10px;
     border-radius:12px;
+    padding:10px;
 }
 
 #sequencer{
     display:grid;
-    grid-template-columns:80px repeat(16, 50px);
-    gap:2px;
+    gap:1px;
 }
 
-.note-label{
-    height:40px;
+.noteLabel{
+    width:90px;
+    height:32px;
     display:flex;
     align-items:center;
     justify-content:center;
+    background:#ececec;
+    font-size:12px;
     font-weight:bold;
-    background:#eee;
+    position:sticky;
+    left:0;
+    z-index:5;
 }
 
-.step{
-    width:50px;
-    height:40px;
-    cursor:pointer;
-    border:1px solid #ccc;
-}
-
-.step.off{
+.cell{
+    width:28px;
+    height:32px;
     background:white;
+    border:1px solid #ddd;
+    cursor:pointer;
 }
 
-.step.on{
+.cell.active{
     background:#ffeb3b;
 }
 
-.playing{
-    outline:4px solid #ff9800;
+.cell.length{
+    background:#ffc107;
 }
 
-.footer-text{
+.measure{
+    border-right:3px solid #777 !important;
+}
+
+.playhead{
+    outline:3px solid #ff5722;
+}
+
+.footer{
     text-align:center;
     margin-top:15px;
-    font-size:14px;
+}
+
+input[type=range]{
+    width:120px;
+}
+
+input[type=number]{
+    width:80px;
+    padding:6px;
 }
 </style>
 </head>
@@ -190,221 +185,432 @@ button{
 <div class="container">
 
 <header>
-    <img src="mainlogo.jpg" alt="Logo" class="logo">
-    <img src="sublogo.jpg" alt="Banner" class="banner">
+<img src="mainlogo.jpg" class="logo">
+<img src="sublogo.jpg" class="banner">
 
-    <h1>Simple Piano Music Maker</h1>
-    <p>Click piano keys to play sounds. Click yellow boxes to make music.</p>
+<h1>Advanced Piano Music Maker</h1>
+<p>3 Octaves • Sharps • BPM • Instruments • Save/Load • Long Notes</p>
 </header>
 
 <div class="controls">
-    <button class="play-btn" id="playBtn">▶ Play Song</button>
-    <button class="stop-btn" id="stopBtn">■ Stop</button>
-    <button class="clear-btn" id="clearBtn">🗑 Clear</button>
 
-    <div class="volume-box">
-        Volume:
-        <input type="range" id="volume" min="0" max="100" value="50">
-        <span id="volumeText">50%</span>
-    </div>
+<button id="playBtn" class="play-btn">▶ Play</button>
+<button id="stopBtn" class="stop-btn">■ Stop</button>
+<button id="clearBtn" class="clear-btn">Clear</button>
+<button id="saveBtn" class="save-btn">Save</button>
+<button id="loadBtn" class="load-btn">Load</button>
+
+<div class="control-box">
+Volume
+<input type="range" id="volume" min="0" max="100" value="50">
+</div>
+
+<div class="control-box">
+BPM
+<input type="number" id="bpm" value="120" min="40" max="300">
+</div>
+
+<div class="control-box">
+Instrument
+<select id="instrument">
+<option value="piano">Piano</option>
+<option value="electric">Electric Piano</option>
+<option value="organ">Organ</option>
+<option value="strings">Strings</option>
+</select>
+</div>
+
 </div>
 
 <div id="piano"></div>
 
-<div class="sequencer-wrapper">
-    <div id="sequencer"></div>
+<div id="sequencerWrapper">
+<div id="sequencer"></div>
 </div>
 
-<div class="footer-text">
-    Piano on top • Music sequencer on bottom
+<div class="footer">
+Click a cell = note start<br>
+Click the same note again = make note longer
 </div>
 
 </div>
 
 <script>
-const notes = [
-    {name:"C", freq:261.63, color:"white"},
-    {name:"D", freq:293.66, color:"white"},
-    {name:"E", freq:329.63, color:"white"},
-    {name:"F", freq:349.23, color:"white"},
-    {name:"G", freq:392.00, color:"white"},
-    {name:"A", freq:440.00, color:"white"},
-    {name:"B", freq:493.88, color:"white"},
-    {name:"C5", freq:523.25, color:"black"}
-];
-
-const steps = 16;
-
-const piano = document.getElementById("piano");
+const pianoDiv = document.getElementById("piano");
 const sequencer = document.getElementById("sequencer");
-const volumeSlider = document.getElementById("volume");
-const volumeText = document.getElementById("volumeText");
+
+const STEPS = 64;
 
 let audioContext;
-let interval = null;
+let playing = null;
 let currentStep = 0;
 
-const grid = [];
+const notes = [
+"C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+"C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+"C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5"
+];
 
-function getVolume(){
-    return volumeSlider.value / 100;
+const frequencies = {};
+
+function generateFrequencyMap(){
+
+const names=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+for(let octave=0;octave<=8;octave++){
+
+for(let i=0;i<12;i++){
+
+let note=names[i]+octave;
+
+let a4Index=(4*12)+9;
+let current=(octave*12)+i;
+
+let freq=440*Math.pow(2,(current-a4Index)/12);
+
+frequencies[note]=freq;
+}
+}
 }
 
-volumeSlider.addEventListener("input", ()=>{
-    volumeText.textContent = volumeSlider.value + "%";
+generateFrequencyMap();
+
+const sequence=[];
+
+notes.forEach(()=>{
+sequence.push(
+Array(STEPS).fill(null)
+);
 });
 
-function initAudio(){
-    if(!audioContext){
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
+function createPiano(){
 
-function playTone(freq, duration=0.3){
+notes.forEach(note=>{
 
-    initAudio();
+const key=document.createElement("div");
 
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+const isBlack=note.includes("#");
 
-    osc.type = "sine";
-    osc.frequency.value = freq;
+key.className="key "+(isBlack?"black":"white");
 
-    gain.gain.value = getVolume();
+key.textContent=note;
 
-    osc.connect(gain);
-    gain.connect(audioContext.destination);
+key.onclick=()=>{
+playSound(note,0.5);
 
-    osc.start();
+key.classList.add("active");
 
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        audioContext.currentTime + duration
-    );
+setTimeout(()=>{
+key.classList.remove("active");
+},100);
+};
 
-    osc.stop(audioContext.currentTime + duration);
-}
+pianoDiv.appendChild(key);
 
-notes.forEach((note)=>{
-
-    const key = document.createElement("div");
-    key.className = "key " + note.color;
-    key.textContent = note.name;
-
-    key.addEventListener("click", ()=>{
-        playTone(note.freq);
-
-        key.classList.add("active");
-
-        setTimeout(()=>{
-            key.classList.remove("active");
-        },100);
-    });
-
-    piano.appendChild(key);
 });
+
+}
+
+createPiano();
+
+function buildSequencer(){
+
+sequencer.style.gridTemplateColumns=
+"90px repeat("+STEPS+", 28px)";
 
 notes.forEach((note,row)=>{
 
-    const label = document.createElement("div");
-    label.className = "note-label";
-    label.textContent = note.name;
+const label=document.createElement("div");
+label.className="noteLabel";
+label.textContent=note;
+sequencer.appendChild(label);
 
-    sequencer.appendChild(label);
+for(let col=0;col<STEPS;col++){
 
-    grid[row] = [];
+const cell=document.createElement("div");
 
-    for(let col=0; col<steps; col++){
+cell.className="cell";
 
-        const cell = document.createElement("div");
-        cell.className = "step off";
+if((col+1)%4===0){
+cell.classList.add("measure");
+}
 
-        grid[row][col] = false;
+cell.dataset.row=row;
+cell.dataset.col=col;
 
-        cell.addEventListener("click", ()=>{
+cell.onclick=()=>{
 
-            grid[row][col] = !grid[row][col];
+if(sequence[row][col]===null){
 
-            if(grid[row][col]){
-                cell.className = "step on";
-                playTone(note.freq);
-            }else{
-                cell.className = "step off";
-            }
-        });
+sequence[row][col]=1;
 
-        sequencer.appendChild(cell);
-    }
+cell.classList.add("active");
+
+}else{
+
+sequence[row][col]++;
+
+cell.classList.add("length");
+
+if(sequence[row][col]>8){
+sequence[row][col]=null;
+cell.className="cell";
+
+if((col+1)%4===0){
+cell.classList.add("measure");
+}
+}
+
+}
+
+};
+
+sequencer.appendChild(cell);
+
+}
+
 });
+
+}
+
+buildSequencer();
+
+function getVolume(){
+return document.getElementById("volume").value/100;
+}
+
+function initAudio(){
+
+if(!audioContext){
+audioContext=new(window.AudioContext||window.webkitAudioContext)();
+}
+
+}
+
+function createOsc(type,freq,gainNode){
+
+const osc=audioContext.createOscillator();
+
+osc.type=type;
+osc.frequency.value=freq;
+
+osc.connect(gainNode);
+
+osc.start();
+
+return osc;
+}
+
+function playSound(note,length){
+
+initAudio();
+
+const instrument=document.getElementById("instrument").value;
+
+const gain=audioContext.createGain();
+
+gain.gain.value=getVolume();
+
+gain.connect(audioContext.destination);
+
+let oscillators=[];
+
+if(instrument==="piano"){
+
+oscillators.push(createOsc("sine",frequencies[note],gain));
+
+}
+
+if(instrument==="electric"){
+
+oscillators.push(createOsc("triangle",frequencies[note],gain));
+
+}
+
+if(instrument==="organ"){
+
+oscillators.push(createOsc("square",frequencies[note],gain));
+oscillators.push(createOsc("square",frequencies[note]*2,gain));
+
+}
+
+if(instrument==="strings"){
+
+oscillators.push(createOsc("sawtooth",frequencies[note],gain));
+oscillators.push(createOsc("triangle",frequencies[note]*0.5,gain));
+
+}
+
+gain.gain.exponentialRampToValueAtTime(
+0.0001,
+audioContext.currentTime+length
+);
+
+oscillators.forEach(o=>{
+o.stop(audioContext.currentTime+length);
+});
+
+}
+
+function clearPlayhead(){
+
+document.querySelectorAll(".playhead").forEach(c=>{
+c.classList.remove("playhead");
+});
+
+}
 
 function stopSong(){
 
-    clearInterval(interval);
-    interval = null;
+clearInterval(playing);
+playing=null;
+currentStep=0;
+clearPlayhead();
 
-    document.querySelectorAll(".playing").forEach(el=>{
-        el.classList.remove("playing");
-    });
-
-    currentStep = 0;
 }
 
 function playSong(){
 
-    stopSong();
+stopSong();
 
-    const cells = document.querySelectorAll(".step");
+const bpm=parseInt(
+document.getElementById("bpm").value
+);
 
-    interval = setInterval(()=>{
+const stepTime=(60000/bpm)/4;
 
-        document.querySelectorAll(".playing").forEach(el=>{
-            el.classList.remove("playing");
-        });
+playing=setInterval(()=>{
 
-        notes.forEach((note,row)=>{
+clearPlayhead();
 
-            const cellIndex = row * steps + currentStep;
-            const cell = cells[cellIndex];
+const cells=document.querySelectorAll(".cell");
 
-            if(cell){
-                cell.classList.add("playing");
-            }
+notes.forEach((note,row)=>{
 
-            if(grid[row][currentStep]){
-                playTone(note.freq,0.25);
-            }
-        });
+const visualIndex=
+(row*STEPS)+currentStep;
 
-        currentStep++;
+const cell=cells[visualIndex];
 
-        if(currentStep >= steps){
-            currentStep = 0;
-        }
-
-    },250);
+if(cell){
+cell.classList.add("playhead");
 }
 
-document.getElementById("playBtn").addEventListener("click", playSong);
-document.getElementById("stopBtn").addEventListener("click", stopSong);
+const length=sequence[row][currentStep];
 
-document.getElementById("clearBtn").addEventListener("click", ()=>{
+if(length){
 
-    stopSong();
+playSound(
+note,
+(length*stepTime)/1000
+);
 
-    const cells = document.querySelectorAll(".step");
+}
 
-    let index = 0;
-
-    for(let row=0; row<notes.length; row++){
-        for(let col=0; col<steps; col++){
-
-            grid[row][col] = false;
-
-            cells[index].className = "step off";
-            index++;
-        }
-    }
 });
+
+currentStep++;
+
+if(currentStep>=STEPS){
+currentStep=0;
+}
+
+},stepTime);
+
+}
+
+document.getElementById("playBtn").onclick=playSong;
+document.getElementById("stopBtn").onclick=stopSong;
+
+document.getElementById("clearBtn").onclick=()=>{
+
+stopSong();
+
+for(let r=0;r<notes.length;r++){
+for(let c=0;c<STEPS;c++){
+sequence[r][c]=null;
+}
+}
+
+document.querySelectorAll(".cell").forEach(cell=>{
+
+cell.className="cell";
+
+const col=parseInt(cell.dataset.col);
+
+if((col+1)%4===0){
+cell.classList.add("measure");
+}
+
+});
+
+};
+
+document.getElementById("saveBtn").onclick=()=>{
+
+const data={
+sequence:sequence
+};
+
+localStorage.setItem(
+"advancedPianoSong",
+JSON.stringify(data)
+);
+
+alert("Song Saved");
+
+};
+
+document.getElementById("loadBtn").onclick=()=>{
+
+const data=
+localStorage.getItem(
+"advancedPianoSong"
+);
+
+if(!data){
+alert("No saved song");
+return;
+}
+
+const parsed=JSON.parse(data);
+
+for(let r=0;r<notes.length;r++){
+for(let c=0;c<STEPS;c++){
+
+sequence[r][c]=parsed.sequence[r][c];
+
+}
+}
+
+document.querySelectorAll(".cell").forEach(cell=>{
+
+const row=parseInt(cell.dataset.row);
+const col=parseInt(cell.dataset.col);
+
+cell.className="cell";
+
+if((col+1)%4===0){
+cell.classList.add("measure");
+}
+
+const value=sequence[row][col];
+
+if(value){
+
+if(value===1){
+cell.classList.add("active");
+}else{
+cell.classList.add("length");
+}
+
+}
+
+});
+
+alert("Song Loaded");
+
+};
 </script>
 
 </body>
